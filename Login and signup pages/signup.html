@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="signup.css">
+    <title>Sign Up - Create Account</title>
+</head>
+
+<body>
+    <div class="signup-container">
+        <div class="logo">
+            <h1>Join Us</h1>
+            <p>Create your account today</p>
+        </div>
+
+        <form id="signupForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="firstName">First Name</label>
+                    <input type="text" id="firstName" name="firstName" placeholder="John" required>
+                    <div class="error-message" id="firstNameError"></div>
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <input type="text" id="lastName" name="lastName" placeholder="Doe" required>
+                    <div class="error-message" id="lastNameError"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="john@example.com" required>
+                <div class="error-message" id="emailError"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="password" name="password" placeholder="Create a strong password"
+                        required>
+                    <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
+                </div>
+                <div class="password-strength" id="passwordStrength">
+                    <div class="password-strength-bar" id="passwordStrengthBar"></div>
+                </div>
+                <div class="password-requirements" id="passwordRequirements">
+                    <div class="requirement">
+                        <div class="requirement-icon" id="lengthIcon"></div>
+                        <span>At least 8 characters</span>
+                    </div>
+                    <div class="requirement">
+                        <div class="requirement-icon" id="uppercaseIcon"></div>
+                        <span>One uppercase letter</span>
+                    </div>
+                    <div class="requirement">
+                        <div class="requirement-icon" id="numberIcon"></div>
+                        <span>One number</span>
+                    </div>
+                    <div class="requirement">
+                        <div class="requirement-icon" id="specialIcon"></div>
+                        <span>One special character</span>
+                    </div>
+                </div>
+                <div class="error-message" id="passwordError"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password"
+                    required>
+                <div class="error-message" id="confirmPasswordError"></div>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="terms" name="terms" required>
+                <label for="terms">
+                    I agree to the <a href="#" onclick="showTerms()">Terms of Service</a> and <a href="#"
+                        onclick="showPrivacy()">Privacy Policy</a>
+                </label>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="newsletter" name="newsletter">
+                <label for="newsletter">
+                    I want to receive updates and promotional emails
+                </label>
+            </div>
+
+            <button type="submit" class="signup-btn" id="signupBtn">
+                <span class="loading" id="loading"></span>
+                <span id="btnText">Create Account</span>
+            </button>
+        </form>
+
+        <div class="divider">
+            <span>or sign up with</span>
+        </div>
+
+        <div class="social-login">
+            <button class="social-btn" onclick="socialSignup('google')">
+                🔍 Google
+            </button>
+            <button class="social-btn" onclick="socialSignup('facebook')">
+                📘 Facebook
+            </button>
+        </div>
+
+        <div class="login-link">
+            Already have an account? <a href="login.html" onclick="showLogin()">Sign in</a>
+        </div>
+    </div>
+
+    <script>
+        // Form validation
+        const validators = {
+            firstName: (value) => value.trim().length >= 2,
+            lastName: (value) => value.trim().length >= 2,
+            email: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+            password: (value) => value.length >= 8,
+            confirmPassword: (value, password) => value === password
+        };
+
+        // Password strength checker
+        function checkPasswordStrength(password) {
+            const requirements = {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                number: /\d/.test(password),
+                special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+            };
+
+            const score = Object.values(requirements).filter(Boolean).length;
+
+            // Update requirement icons
+            document.getElementById('lengthIcon').classList.toggle('valid', requirements.length);
+            document.getElementById('uppercaseIcon').classList.toggle('valid', requirements.uppercase);
+            document.getElementById('numberIcon').classList.toggle('valid', requirements.number);
+            document.getElementById('specialIcon').classList.toggle('valid', requirements.special);
+
+            // Update strength bar
+            const strengthBar = document.getElementById('passwordStrengthBar');
+            strengthBar.className = 'password-strength-bar';
+
+            if (score < 2) {
+                strengthBar.classList.add('weak');
+            } else if (score < 4) {
+                strengthBar.classList.add('medium');
+            } else {
+                strengthBar.classList.add('strong');
+            }
+
+            return score >= 3;
+        }
+
+        // Real-time validation
+        function validateField(fieldId, validator, errorId, customMessage) {
+            const field = document.getElementById(fieldId);
+            const error = document.getElementById(errorId);
+
+            field.addEventListener('blur', function () {
+                const isValid = fieldId === 'confirmPassword'
+                    ? validator(this.value, document.getElementById('password').value)
+                    : validator(this.value);
+
+                if (!isValid) {
+                    error.textContent = customMessage || `Please enter a valid ${fieldId}`;
+                    error.classList.add('visible');
+                    field.style.borderColor = '#ff4757';
+                } else {
+                    error.classList.remove('visible');
+                    field.style.borderColor = '#2ed573';
+                }
+            });
+
+            field.addEventListener('input', function () {
+                if (error.classList.contains('visible')) {
+                    const isValid = fieldId === 'confirmPassword'
+                        ? validator(this.value, document.getElementById('password').value)
+                        : validator(this.value);
+
+                    if (isValid) {
+                        error.classList.remove('visible');
+                        field.style.borderColor = '#2ed573';
+                    }
+                }
+            });
+        }
+
+        // Initialize validation
+        validateField('firstName', validators.firstName, 'firstNameError', 'First name must be at least 2 characters');
+        validateField('lastName', validators.lastName, 'lastNameError', 'Last name must be at least 2 characters');
+        validateField('email', validators.email, 'emailError', 'Please enter a valid email address');
+        validateField('password', validators.password, 'passwordError', 'Password must be at least 8 characters');
+        validateField('confirmPassword', validators.confirmPassword, 'confirmPasswordError', 'Passwords do not match');
+
+        // Password strength display
+        document.getElementById('password').addEventListener('focus', function () {
+            document.getElementById('passwordStrength').classList.add('visible');
+            document.getElementById('passwordRequirements').classList.add('visible');
+        });
+
+        document.getElementById('password').addEventListener('input', function () {
+            checkPasswordStrength(this.value);
+        });
+
+        // Form submission
+        document.getElementById('signupForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Validate all fields
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const terms = document.getElementById('terms').checked;
+
+            let isValid = true;
+
+            // Check all validations
+            if (!validators.firstName(firstName)) {
+                document.getElementById('firstNameError').textContent = 'First name must be at least 2 characters';
+                document.getElementById('firstNameError').classList.add('visible');
+                isValid = false;
+            }
+
+            if (!validators.lastName(lastName)) {
+                document.getElementById('lastNameError').textContent = 'Last name must be at least 2 characters';
+                document.getElementById('lastNameError').classList.add('visible');
+                isValid = false;
+            }
+
+            if (!validators.email(email)) {
+                document.getElementById('emailError').textContent = 'Please enter a valid email address';
+                document.getElementById('emailError').classList.add('visible');
+                isValid = false;
+            }
+
+            if (!checkPasswordStrength(password)) {
+                document.getElementById('passwordError').textContent = 'Password must meet all requirements';
+                document.getElementById('passwordError').classList.add('visible');
+                isValid = false;
+            }
+
+            if (!validators.confirmPassword(confirmPassword, password)) {
+                document.getElementById('confirmPasswordError').textContent = 'Passwords do not match';
+                document.getElementById('confirmPasswordError').classList.add('visible');
+                isValid = false;
+            }
+
+            if (!terms) {
+                alert('Please agree to the Terms of Service and Privacy Policy');
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
+            // Show loading state
+            const loading = document.getElementById('loading');
+            const btnText = document.getElementById('btnText');
+            const btn = document.getElementById('signupBtn');
+
+            loading.style.display = 'inline-block';
+            btnText.textContent = 'Creating Account...';
+            btn.disabled = true;
+
+            // Simulate API call
+            setTimeout(() => {
+                loading.style.display = 'none';
+                btnText.textContent = 'Create Account';
+                btn.disabled = false;
+
+                alert(`Account created successfully! Welcome, ${firstName}!`);
+
+                // Here you would typically redirect to login or dashboard
+                // window.location.href = '/login';
+            }, 2500);
+        });
+
+        // Toggle password visibility
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = document.querySelector('.password-toggle');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+
+        // Social signup handlers
+        function socialSignup(provider) {
+            alert(`Creating account with ${provider}...`);
+            // Here you would implement actual social signup
+        }
+
+        // Navigation handlers
+        function showLogin() {
+            alert('Redirecting to login page...');
+            // Here you would redirect to login page
+        }
+
+        function showTerms() {
+            alert('Terms of Service would open here');
+        }
+
+        function showPrivacy() {
+            alert('Privacy Policy would open here');
+        }
+
+        // Add floating label effect
+        document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"]').forEach(input => {
+            input.addEventListener('focus', function () {
+                this.parentElement.classList.add('focused');
+            });
+
+            input.addEventListener('blur', function () {
+                if (this.value === '') {
+                    this.parentElement.classList.remove('focused');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
